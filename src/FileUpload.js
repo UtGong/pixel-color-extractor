@@ -17,7 +17,7 @@ function FileUpload({ handleFileChange, handleFileUpload, isLoading, errorMessag
         <button 
           type="submit" 
           disabled={isLoading} 
-          className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${isLoading ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'}`}
+          className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${isLoading ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-200 to-indigo-300 hover:from-purple-300 hover:to-indigo-600'}`}
         >
           {isLoading ? 'Processing...' : 'Submit'}
         </button>

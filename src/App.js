@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Header from './Header';  // Import the Header
-import Footer from './Footer';  // Import the Footer
-import FileUpload from './FileUpload';
-import CurrentResult from './CurrentResult';
-import Sidebar from './Sidebar';
+import { Route, Routes, Navigate } from 'react-router-dom';  // No BrowserRouter here
+import Header from './Header';
+import Footer from './Footer';
 import AuthPage from './AuthPage';
-import { addRecord, getUserRecords, updatePurchaseStatus } from "./authService"; 
+import HomePage from './HomePage';  // Import the new HomePage component
+import { addRecord, getUserRecords, updatePurchaseStatus } from "./authService";
+import './App.css';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -20,6 +19,15 @@ function App() {
 
   // Fetch user records from Firestore on component mount
   useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    const storedAuth = localStorage.getItem('isAuthenticated') === 'true';
+    if (storedUsername && storedAuth) {
+      setUsername(storedUsername);
+      setIsAuthenticated(storedAuth);
+    }
+  }, []);
+
+  useEffect(() => {
     if (username) {
       const fetchRecords = async () => {
         const records = await getUserRecords(username);  // Fetch records from Firestore
@@ -30,38 +38,40 @@ function App() {
     }
   }, [username]);
 
-  // Add new records to both Firestore and the sidebar
+  const handleLoginSuccess = (username) => {
+    setUsername(username);
+    setIsAuthenticated(true);
+    localStorage.setItem('username', username);
+    localStorage.setItem('isAuthenticated', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUsername(null);
+    localStorage.removeItem('username');
+    localStorage.removeItem('isAuthenticated');
+  };
+
   const updateUniqueTexts = (newTexts) => {
     setUniqueTexts((prevTexts) => {
       const allTexts = [...prevTexts];
-
       newTexts.forEach((newText) => {
-        // Check for uniqueness: if the newText is not already in the list
         if (!allTexts.some((item) => item.text === newText)) {
           const newItem = { text: newText, purchased: false };
-
-          // Add the new unique item to the sidebar list (ALL)
           allTexts.push(newItem);
-
-          // Add the new record to Firestore
           addRecord(username, newItem);
         }
       });
-
-      return allTexts; // Update the sidebar state with the new ALL list
+      return allTexts;
     });
   };
 
-  // Toggle purchase status in Firestore and update sidebar
   const togglePurchased = (text) => {
     setUniqueTexts((prevTexts) => {
       const updatedTexts = prevTexts.map((item) => {
         if (item.text === text) {
           const updatedItem = { ...item, purchased: !item.purchased };
-
-          // Update purchase status in Firestore
-          updatePurchaseStatus(username, item.text, updatedItem.purchased); // Use the correct username
-
+          updatePurchaseStatus(username, item.text, updatedItem.purchased);
           return updatedItem;
         }
         return item;
@@ -70,7 +80,6 @@ function App() {
     });
   };
 
-  // Handle file upload and process the image
   const handleFileUpload = async (file) => {
     if (!file) {
       alert('Please upload an image.');
@@ -90,84 +99,56 @@ function App() {
       });
 
       const data = await res.json();
-      
-      // Update current result to show on the main page
       setCurrentResult(data);
-
-      // Update the sidebar (uniqueTexts) and save the new records in Firestore
       updateUniqueTexts(data);
-
       setSelectedFile(null);
     } catch (error) {
       setErrorMessage('Failed to upload file. Please try again.');
-      console.error('Error uploading file:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen">
-        {/* Header */}
-        <Header />
+    <div className="flex flex-col h-screen">
+      {/* Header at the top */}
+      <Header handleLogout={handleLogout} isAuthenticated={isAuthenticated} />
 
-        {/* Main Content */}
-        <div className="flex flex-row flex-grow bg-gray-100">
-          {/* Main Content (Left Side) */}
-          <div className="flex-1 p-8">
-            <div className="flex flex-col space-y-6">
-              {/* File Upload */}
-              <FileUpload
-                handleFileChange={(file) => setSelectedFile(file)}
-                handleFileUpload={() => handleFileUpload(selectedFile)}
-                isLoading={isLoading}
-                errorMessage={errorMessage}
-              />
+      {/* Main content area with flex-grow and overflow */}
+      <main className="flex-grow overflow-y-auto">
+        <Routes>
+          <Route
+            path="/auth"
+            element={<AuthPage onLoginSuccess={handleLoginSuccess} />}
+          />
+          <Route
+            path="/home"
+            element={
+              isAuthenticated ? (
+                <HomePage
+                  selectedFile={selectedFile}
+                  setSelectedFile={setSelectedFile}
+                  handleFileUpload={handleFileUpload}
+                  currentResult={currentResult}
+                  uniqueTexts={uniqueTexts}
+                  filter={filter}
+                  setFilter={setFilter}
+                  togglePurchased={togglePurchased}
+                  isLoading={isLoading}
+                  errorMessage={errorMessage}
+                />
+              ) : (
+                <Navigate to="/auth" />
+              )
+            }
+          />
+          <Route path="*" element={<Navigate to={isAuthenticated ? "/home" : "/auth"} />} />
+        </Routes>
+      </main>
 
-              {/* Current Result */}
-              <CurrentResult currentResult={currentResult} />
-            </div>
-          </div>
-
-          {/* Sidebar (Right Side) */}
-          <div className="w-1/3 bg-white shadow-lg p-6">
-            <Sidebar
-              uniqueTexts={uniqueTexts}
-              filter={filter}
-              setFilter={setFilter}
-              togglePurchased={togglePurchased}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <Footer />
-      </div>
-
-      <Routes>
-        {/* Authentication Route */}
-        <Route path="/auth" element={<AuthPage onLoginSuccess={(username) => { 
-          setUsername(username); 
-          setIsAuthenticated(true); 
-        }} />} />
-
-        {/* Main App Route (requires authentication) */}
-        {/* <Route
-          path="/home"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/home" />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
-        /> */}
-
-        {/* Catch-all Route to Redirect Unauthenticated Users */}
-        <Route path="*" element={<Navigate to="/auth" />} />
-      </Routes>
-    </Router>
+      {/* Footer at the bottom */}
+      <Footer />
+    </div>
   );
 }
 
