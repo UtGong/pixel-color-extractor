@@ -136,6 +136,7 @@ function App() {
                   togglePurchased={togglePurchased}
                   isLoading={isLoading}
                   errorMessage={errorMessage}
+                  username={username}
                 />
               ) : (
                 <Navigate to="/auth" />

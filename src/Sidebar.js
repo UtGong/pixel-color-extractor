@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { getUserRecords, updatePurchaseStatus } from './authService';  // Add a function to fetch user records from Firestore
 
-function Sidebar({ uniqueTexts, filter, setFilter, togglePurchased }) {
+function Sidebar({ uniqueTexts, filter, setFilter, togglePurchased, username }) {
   const [userRecords, setUserRecords] = useState([]); // Store user records from Firestore
-  const username = "exampleUser"; // Replace this with dynamic username
+  // const username = "exampleUser"; // Replace this with dynamic username
 
   useEffect(() => {
     // Fetch records from Firestore on load
     async function fetchRecords() {
+      console.log("username:" + username);
       const records = await getUserRecords(username);
+      console.log("records:", records); 
       setUserRecords(records); // Store Firestore records in state
     }
 

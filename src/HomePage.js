@@ -14,7 +14,8 @@ function HomePage({
   setFilter,
   togglePurchased,
   isLoading,
-  errorMessage
+  errorMessage,
+  username
 }) {
   return (
     <div className="flex flex-col min-h-screen">
@@ -42,6 +43,7 @@ function HomePage({
             filter={filter}
             setFilter={setFilter}
             togglePurchased={togglePurchased}
+            username={username}
           />
         </div>
       </div>
