@@ -1,15 +1,14 @@
 const express = require('express');
 const axios = require('axios');
 const FormData = require('form-data');
-const fs = require('fs');
 const cors = require('cors');
 const multer = require('multer');  // For handling file uploads
 
 const app = express();
 app.use(cors());  // Enable CORS for frontend-backend communication
 
-// Set up multer to handle file uploads, storing them in 'uploads/' directory
-const upload = multer({ dest: 'uploads/' });
+// Set up multer to handle file uploads, storing them in memory
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Function to extract unique texts from the API response
 function getUniqueText(response) {
@@ -44,48 +43,57 @@ app.post('/upload-image', upload.single('image'), (req, res) => {
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
-  // Prepare form data for the API request
-  const form = new FormData();
-  form.append('image', fs.createReadStream(file.path));
+  try {
+    // Prepare form data for the API request using the file buffer
+    const form = new FormData();
+    form.append('image', file.buffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+    });
 
-  // External API URL for image-to-text conversion
-  const apiUrl = 'https://api.api-ninjas.com/v1/imagetotext';
+    // External API URL for image-to-text conversion
+    const apiUrl = 'https://api.api-ninjas.com/v1/imagetotext';
 
-  axios.post(apiUrl, form, {
-    headers: {
-      ...form.getHeaders(),
-      'X-Api-Key': 'XmLd4F+8scA/XbC9UcGJOQ==n3ozI3oIWfU8HEoa',  // Replace with your actual API key
-    },
-  })
-  .then((response) => {
-    // Call the getUniqueText function to extract unique texts
-    const uniqueTexts = getUniqueText(response.data);
-    console.log(uniqueTexts);
+    axios.post(apiUrl, form, {
+      headers: {
+        ...form.getHeaders(),
+        'X-Api-Key': 'XmLd4F+8scA/XbC9UcGJOQ==n3ozI3oIWfU8HEoa',  // Replace with your actual API key
+      },
+      timeout: 10000,  // Set timeout to 10 seconds
+    })
+    .then((response) => {
+      // Check if the response data is valid
+      if (response.data && Array.isArray(response.data)) {
+        // Call the getUniqueText function to extract unique texts
+        const uniqueTexts = getUniqueText(response.data);
 
-    // Filter and sort the unique texts based on the specified pattern
-    const filteredAndSortedTexts = filterAndSortTexts(uniqueTexts);
+        // Filter and sort the unique texts based on the specified pattern
+        const filteredAndSortedTexts = filterAndSortTexts(uniqueTexts);
 
-    // Send filtered and sorted texts back to the frontend
-    res.json(filteredAndSortedTexts);
-  })
-  .catch((error) => {
-    console.error('Error making API request:', error.message);
-    res.status(500).json({ message: 'Failed to process image' });
-  })
-  .finally(() => {
-    // Clean up uploaded file after processing
-    fs.unlinkSync(file.path);
-  });
+        // Send filtered and sorted texts back to the frontend
+        res.json(filteredAndSortedTexts);
+      } else {
+        throw new Error('Invalid response format from API');
+      }
+    })
+    .catch((error) => {
+      console.error('Error making API request:', error.message);
+      res.status(500).json({ message: 'Failed to process image due to API error' });
+    });
+  } catch (error) {
+    console.error('Error during file upload:', error.message);
+    res.status(500).json({ message: 'File upload failed due to server error' });
+  }
 });
 
 // Start the backend server
 const PORT = 8000;
 app.get('/', (req, res) => {
-  res.send('Hello World')
-})
+  res.send('Hello World');
+});
 app.get('/about', (req, res) => {
-  res.send('About route 🎉 ')
-})
+  res.send('About route 🎉 ');
+});
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);
-})
+});

@@ -93,7 +93,7 @@ function App() {
     setErrorMessage('');
 
     try {
-      const res = await fetch('http://localhost:5001/upload-image', {
+      const res = await fetch('http://localhost:8000/upload-image', {
         method: 'POST',
         body: formData,
       });
