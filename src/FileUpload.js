@@ -3,7 +3,7 @@ import React from 'react';
 function FileUpload({ handleFileChange, handleFileUpload, isLoading, errorMessage }) {
   return (
     <div className="bg-white shadow-md rounded-lg p-8 mb-6 w-full md:w-2/3">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">Upload an Image</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">请选择图片上传</h1>
       <form onSubmit={(e) => { e.preventDefault(); handleFileUpload(); }}>
         <div className="mb-4">
           <input 
@@ -23,7 +23,7 @@ function FileUpload({ handleFileChange, handleFileUpload, isLoading, errorMessag
         </button>
       </form>
 
-      {isLoading && <p className="text-gray-500 mt-4">Processing image...</p>}
+      {isLoading && <p className="text-gray-500 mt-4">正在处理图片...</p>}
       {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
     </div>
   );

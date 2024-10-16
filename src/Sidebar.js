@@ -74,7 +74,7 @@ function Sidebar({ uniqueTexts, filter, setFilter, togglePurchased, username }) 
 
   return (
     <div className="bg-gray-50 p-6 shadow-md h-full">
-      <h3 className="text-2xl font-bold text-gray-900 mb-4">History</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-4">记录</h3>
 
       {/* Dropdown for filtering */}
       <select 
@@ -82,9 +82,9 @@ function Sidebar({ uniqueTexts, filter, setFilter, togglePurchased, username }) 
         onChange={(e) => setFilter(e.target.value)}
         className="mb-4 block w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
       >
-        <option value="ALL">All</option>
-        <option value="purchased">Purchased</option>
-        <option value="not purchased">Unpurchased</option>
+        <option value="ALL">全部</option>
+        <option value="purchased">已购买</option>
+        <option value="not purchased">未购买</option>
       </select>
 
       {/* Display list of filtered and sorted records */}
